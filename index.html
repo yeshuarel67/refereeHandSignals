@@ -1,203 +1,365 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Wrestling Hand Signal Classifier</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Wrestling Hand Signal Classifier</title>
 
-    <!-- Google Font -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 
-    <style>
-        body {
-            margin: 0;
-            font-family: "Inter", sans-serif;
-            background: #0d0f12;
-            color: #e0e0e0;
-        }
+  <style>
+    :root{
+      --bg:#0b0c0f;
+      --panel:#111216;
+      --muted:#bfc5cf;
+      --silver:#c0c4c8;
+      --accent:#7ea7ff;
+      --card-border: rgba(124,150,200,0.12);
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:"Inter",system-ui,Segoe UI,Roboto,Helvetica,Arial;
+      background:linear-gradient(180deg,var(--bg) 0%, #070709 100%);
+      color:var(--muted);
+      -webkit-font-smoothing:antialiased;
+      -moz-osx-font-smoothing:grayscale;
+      padding:28px;
+    }
 
-        header {
-            padding: 35px 20px;
-            text-align: center;
-            background: linear-gradient(135deg, #1a1c20 0%, #0d0f12 100%);
-            border-bottom: 1px solid #3a3d42;
-        }
+    header{
+      text-align:center;
+      margin-bottom:20px;
+    }
+    h1{
+      color:var(--accent);
+      margin:0;
+      font-size:2rem;
+      letter-spacing:0.3px;
+    }
+    p.lead{
+      margin:8px 0 0;
+      color:#9fa6b2;
+    }
 
-        h1 {
-            font-size: 2.4rem;
-            color: #8ab4ff; /* soft blue accent */
-            margin-bottom: 10px;
-        }
+    .container{
+      max-width:980px;
+      margin:18px auto;
+      display:grid;
+      grid-template-columns: 360px 1fr;
+      gap:20px;
+    }
 
-        h2 {
-            color: #bfc5d1;
-            margin-top: 40px;
-            text-align: center;
-        }
+    .card{
+      background:linear-gradient(180deg,var(--panel), #0f1114);
+      border:1px solid var(--card-border);
+      padding:18px;
+      border-radius:12px;
+      box-shadow: 0 6px 18px rgba(3,6,12,0.6);
+    }
 
-        p {
-            max-width: 750px;
-            margin: 10px auto;
-            line-height: 1.6;
-            font-size: 1rem;
-            color: #c7c7c7;
-            text-align: center;
-        }
+    /* Left column: webcam + controls */
+    #left .canvas-wrap{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      gap:12px;
+    }
+    #canvas{
+      width:320px;
+      height:320px;
+      background:#000;
+      border-radius:10px;
+      border:2px solid rgba(126,167,255,0.18);
+    }
 
-        .section {
-            margin: 40px auto;
-            max-width: 900px;
-            padding: 20px;
-            border-radius: 12px;
-            background: #16181d;
-            border: 1px solid #31343a;
-        }
+    .controls{
+      display:flex;
+      gap:10px;
+      justify-content:center;
+      margin-top:6px;
+    }
+    button.btn{
+      background:linear-gradient(180deg,var(--accent), #5f8ff0);
+      color:#06101f;
+      border:none;
+      padding:10px 14px;
+      border-radius:8px;
+      font-weight:700;
+      cursor:pointer;
+      box-shadow:0 6px 14px rgba(80,120,200,0.12);
+    }
+    button.btn.ghost{
+      background:transparent;
+      border:1px solid rgba(255,255,255,0.04);
+      color:var(--silver);
+      font-weight:600;
+    }
+    #status{
+      text-align:center;
+      color:#9ca6b7;
+      font-size:0.94rem;
+      margin-top:6px;
+    }
 
-        #start-btn {
-            margin-top: 20px;
-            padding: 12px 25px;
-            font-size: 1rem;
-            cursor: pointer;
-            border: none;
-            border-radius: 8px;
-            background: #8ab4ff; /* blue accent */
-            color: #0d0f12;
-            transition: 0.25s;
-            font-weight: 600;
-        }
+    /* Right column: info + predictions */
+    #right .section-title{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .predictions{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      margin-top:12px;
+    }
+    .pred {
+      display:flex;
+      justify-content:space-between;
+      padding:10px 12px;
+      border-radius:8px;
+      background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));
+      border:1px solid rgba(255,255,255,0.02);
+      color:var(--silver);
+      font-weight:700;
+    }
+    .muted {
+      color:#9aa3ad;
+      font-weight:600;
+    }
+    .instructions{
+      margin-top:14px;
+      color:#aab3bf;
+      line-height:1.5;
+      font-size:0.95rem;
+    }
 
-        #start-btn:hover {
-            background: #b5cfff;
-        }
+    footer{
+      max-width:980px;
+      margin:18px auto 40px;
+      text-align:center;
+      color:#808b96;
+      font-size:0.9rem;
+    }
 
-        .model-container {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            margin-top: 25px;
-        }
-
-        #canvas {
-            border-radius: 12px;
-            border: 2px solid #8ab4ff;
-            margin-bottom: 20px;
-        }
-
-        #label-container div {
-            background: #1d2026;
-            padding: 10px 15px;
-            margin-top: 6px;
-            border-radius: 8px;
-            width: 240px;
-            text-align: center;
-            border: 1px solid #2b2f36;
-            font-weight: 600;
-            color: #8ab4ff;
-        }
-    </style>
+    /* responsive */
+    @media (max-width:900px){
+      .container{ grid-template-columns: 1fr; }
+      #canvas{ width:280px; height:280px; }
+    }
+  </style>
 </head>
-
 <body>
-    <header>
-        <h1>Wrestling Hand Signal Classifier</h1>
-        <p>A Teachable Machine project that helps wrestling referees identify and practice official hand signals.</p>
-    </header>
+  <header>
+    <h1>Wrestling Hand Signal Classifier</h1>
+    <p class="lead">Dark tech theme — silver &amp; blue accents. Model: Teachable Machine Pose (Start / Stop / Near Fall etc.)</p>
+  </header>
 
-    <div class="section">
-        <h2>About the Project</h2>
-        <p>
-            This tool uses a machine learning model trained through Teachable Machine to recognize common wrestling
-            referee hand signals. When you perform a pose, the system detects the gesture and displays which hand signal
-            you are doing, along with a confidence percentage.
-        </p>
-        <p>
-            This can help new referees practice, improve consistency, and learn proper form.
-        </p>
-    </div>
+  <main class="container">
+    <div id="left" class="card">
+      <div class="canvas-wrap">
+        <canvas id="canvas" width="320" height="320"></canvas>
+        <div id="status">Model not loaded — press <strong>Start</strong>.</div>
 
-    <div class="section">
-        <h2>How It Works</h2>
-        <p>
-            The model takes your webcam feed, uses PoseNet to detect body keypoints, and then classifies those keypoints
-            into hand-signal classes such as “Start Match,” “Stop Match,” and “Near Fall.”
-        </p>
-        <p>
-            Click the button below to activate the webcam and begin classifying your signals.
-        </p>
-
-        <center><button id="start-btn" onclick="init()">Start</button></center>
-
-        <div class="model-container">
-            <canvas id="canvas"></canvas>
-            <div id="label-container"></div>
+        <div class="controls">
+          <button id="startBtn" class="btn">Start</button>
+          <button id="stopBtn" class="btn ghost" disabled>Stop</button>
         </div>
+        <div style="margin-top:8px; color:#97a4b1; font-size:0.9rem; text-align:center;">
+          <span id="tip">Make sure your model folder <code>./my_model/</code> is present and contains <code>model.json</code>.</span>
+        </div>
+      </div>
     </div>
 
-    <!-- TensorFlow + TM Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
+    <div id="right" class="card">
+      <div class="section-title">
+        <div>
+          <h2 style="margin:0; color:var(--accent)">Predictions</h2>
+          <div class="muted" style="margin-top:6px">Confidence for each class (updates live)</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:0.85rem; color:#95a2b2">Model path: <code style="color:#cbd6e8">./my_model/</code></div>
+        </div>
+      </div>
 
-    <script type="text/javascript">
-        const URL = "./my_model/";
-        let model, webcam, ctx, labelContainer, maxPredictions;
+      <div id="predictions" class="predictions" aria-live="polite" style="min-height:120px">
+        <div class="muted" style="padding:12px; border-radius:8px; margin-top:10px; background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));">No predictions yet.</div>
+      </div>
 
-        async function init() {
-            const modelURL = URL + "model.json";
-            const metadataURL = URL + "metadata.json";
+      <div class="instructions">
+        <strong>How to use</strong>
+        <ul>
+          <li>Click <strong>Start</strong> to load the model and enable the webcam.</li>
+          <li>Perform hand signals in front of the camera; each class shows a percentage (higher is better).</li>
+          <li>If the model fails to load, check browser console for errors and verify the model files are in <code>./my_model/</code>.</li>
+        </ul>
+      </div>
+    </div>
+  </main>
 
-            // Load the model
-            model = await tmPose.load(modelURL, metadataURL);
-            maxPredictions = model.getTotalClasses();
+  <footer>
+    Tip: GitHub Pages serves static files — ensure the model directory is committed. If you see CORS or 404 errors, confirm the model path and filenames.
+  </footer>
 
-            // Start webcam
-            const size = 300;
-            const flip = true;
-            webcam = new tmPose.Webcam(size, size, flip);
-            await webcam.setup();
-            await webcam.play();
-            window.requestAnimationFrame(loop);
+  <!-- Libraries: keep versions compatible with teachablemachine-pose 0.8 -->
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@1.3.1/dist/tf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@teachablemachine/pose@0.8/dist/teachablemachine-pose.min.js"></script>
 
-            const canvas = document.getElementById("canvas");
-            canvas.width = size;
-            canvas.height = size;
-            ctx = canvas.getContext("2d");
+  <script>
+    // CONFIG - change if your model is elsewhere
+    const MODEL_PATH = "./my_model/"; // must contain model.json and metadata.json
 
-            labelContainer = document.getElementById("label-container");
-            labelContainer.innerHTML = "";
-            for (let i = 0; i < maxPredictions; i++) {
-                labelContainer.appendChild(document.createElement("div"));
-            }
+    // State variables
+    let model = null;
+    let webcam = null;
+    let ctx = null;
+    let running = false;
+    let maxPredictions = 0;
+
+    // DOM
+    const startBtn = document.getElementById("startBtn");
+    const stopBtn = document.getElementById("stopBtn");
+    const statusEl = document.getElementById("status");
+    const predEl = document.getElementById("predictions");
+    const canvas = document.getElementById("canvas");
+
+    // Utility: show message
+    function showStatus(txt, tone = "info"){
+      statusEl.innerHTML = txt;
+    }
+
+    async function initModelAndCamera(){
+      try{
+        showStatus("Loading model...");
+        const modelURL = MODEL_PATH + "model.json";
+        const metadataURL = MODEL_PATH + "metadata.json";
+        model = await tmPose.load(modelURL, metadataURL);
+        maxPredictions = model.getTotalClasses();
+        showStatus("Model loaded. Accessing webcam...");
+
+        // setup webcam
+        const size = 320;
+        const flip = true;
+        webcam = new tmPose.Webcam(size, size, flip);
+        await webcam.setup(); // request permission
+        await webcam.play();
+
+        // prepare canvas
+        canvas.width = size;
+        canvas.height = size;
+        ctx = canvas.getContext("2d");
+
+        // enable Stop button
+        stopBtn.disabled = false;
+        startBtn.disabled = true;
+
+        // initialize predictions UI
+        renderEmptyPredictions();
+
+        running = true;
+        showStatus("Running — perform a hand signal in view of the camera.");
+        window.requestAnimationFrame(loop);
+      } catch(err){
+        console.error("Initialization error:", err);
+        showStatus("Error: " + (err.message || err));
+        alert("Error loading model or webcam. Check console for details.");
+        startBtn.disabled = false;
+        stopBtn.disabled = true;
+      }
+    }
+
+    function renderEmptyPredictions(){
+      predEl.innerHTML = "";
+      for(let i=0;i<maxPredictions;i++){
+        const row = document.createElement("div");
+        row.className = "pred";
+        row.innerHTML = `<span class="muted">Class ${i+1}</span><span>—</span>`;
+        predEl.appendChild(row);
+      }
+    }
+
+    async function loop(timestamp){
+      if(!running) return;
+      webcam.update();
+      await predict();
+      window.requestAnimationFrame(loop);
+    }
+
+    async function predict(){
+      if(!model) return;
+      // estimate pose
+      const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
+      const prediction = await model.predict(posenetOutput);
+
+      // update predictions UI
+      predEl.innerHTML = "";
+      for(let i=0;i<prediction.length;i++){
+        const p = prediction[i];
+        const percent = (p.probability * 100).toFixed(1) + "%";
+        const row = document.createElement("div");
+        row.className = "pred";
+        row.innerHTML = `<span>${escapeHtml(p.className)}</span><span>${percent}</span>`;
+        predEl.appendChild(row);
+      }
+
+      // draw webcam + pose
+      drawPose(pose);
+    }
+
+    function drawPose(pose){
+      if(!webcam || !ctx) return;
+      ctx.save();
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      // draw video frame
+      ctx.drawImage(webcam.canvas, 0, 0, canvas.width, canvas.height);
+
+      if(pose){
+        const minPartConfidence = 0.5;
+        tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
+        tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
+      }
+      ctx.restore();
+    }
+
+    // Stop and cleanup
+    function stopEverything(){
+      running = false;
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+      showStatus("Stopped.");
+      // stop webcam media tracks
+      try{
+        if(webcam && webcam.webcam && webcam.webcam.srcObject){
+          const tracks = webcam.webcam.srcObject.getTracks();
+          tracks.forEach(t => t.stop());
         }
+      }catch(e){ /* ignore */ }
+      // clear canvas
+      if(ctx){
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+      }
+      predEl.innerHTML = '<div class="muted" style="padding:12px; border-radius:8px;">No predictions — stopped.</div>';
+    }
 
-        async function loop() {
-            webcam.update();
-            await predict();
-            window.requestAnimationFrame(loop);
-        }
+    // Helpers
+    function escapeHtml(text) {
+      const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+      return String(text).replace(/[&<>"']/g, m => map[m]);
+    }
 
-        async function predict() {
-            const { pose, posenetOutput } = await model.estimatePose(webcam.canvas);
-            const prediction = await model.predict(posenetOutput);
+    // Button handlers
+    startBtn.addEventListener("click", async ()=>{
+      startBtn.disabled = true;
+      await initModelAndCamera();
+    });
 
-            for (let i = 0; i < maxPredictions; i++) {
-                labelContainer.childNodes[i].innerHTML =
-                    `${prediction[i].className}: ${(prediction[i].probability * 100).toFixed(1)}%`;
-            }
+    stopBtn.addEventListener("click", ()=>{
+      stopEverything();
+    });
 
-            drawPose(pose);
-        }
-
-        function drawPose(pose) {
-            if (webcam.canvas) {
-                ctx.drawImage(webcam.canvas, 0, 0);
-                if (pose) {
-                    const minPartConfidence = 0.5;
-                    tmPose.drawKeypoints(pose.keypoints, minPartConfidence, ctx);
-                    tmPose.drawSkeleton(pose.keypoints, minPartConfidence, ctx);
-                }
-            }
-        }
-    </script>
-
+    // Developer helper: show console note
+    console.log("Page loaded. If model fails to load, check that ./my_model/model.json exists and that GitHub Pages is serving the files (no 404/CORS).");
+  </script>
 </body>
 </html>
